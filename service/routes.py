@@ -93,7 +93,32 @@ def get_accounts(account_id):
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
 
-# ... place you code here to UPDATE an account ...
+def test_update_account(self):
+    """It should Update an existing Account"""
+    account = self._create_accounts(1)[0]
+    new_name = "Updated Name"
+    account_data = account.serialize()
+    account_data["name"] = new_name
+
+    resp = self.client.put(
+        f"{BASE_URL}/{account.id}",
+        json=account_data,
+        content_type="application/json"
+    )
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    data = resp.get_json()
+    self.assertEqual(data["name"], new_name)
+
+def test_update_account_not_found(self):
+    """It should return 404 when updating non-existent Account"""
+    fake_id = 9999
+    account_data = {"name": "Ghost", "email": "ghost@example.com"}
+    resp = self.client.put(
+        f"{BASE_URL}/{fake_id}",
+        json=account_data,
+        content_type="application/json"
+    )
+    self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
 
 ######################################################################

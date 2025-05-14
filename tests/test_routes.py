@@ -12,6 +12,7 @@ from tests.factories import AccountFactory
 from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
+from flask import jsonify, request, abort
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
@@ -145,3 +146,16 @@ class TestAccountService(TestCase):
         accounts = Account.all()
         results = [account.serialize() for account in accounts]
         return jsonify(results), status.HTTP_200_OK
+
+    @app.route("/accounts/<int:account_id>", methods=["PUT"])
+    def update_account(account_id):
+        """Update an Account"""
+        app.logger.info(f"Request to update account with id: {account_id}")
+        account = Account.find(account_id)
+        if not account:
+            app.logger.error(f"Account with id: {account_id} not found")
+            abort(status.HTTP_404_NOT_FOUND, f"Account with id {account_id} not found.")
+    
+        account.deserialize(request.get_json())
+        account.update()
+        return jsonify(account.serialize()), status.HTTP_200_OK
