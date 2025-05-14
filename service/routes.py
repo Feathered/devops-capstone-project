@@ -57,18 +57,7 @@ def create_accounts():
         jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
     )
 
-######################################################################
-# LIST ALL ACCOUNTS
-######################################################################
-def test_list_accounts(self):
-    """It should List all Accounts"""
-    accounts = self._create_accounts(3)
-    resp = self.client.get(BASE_URL, content_type="application/json")
-    self.assertEqual(resp.status_code, status.HTTP_200_OK)
-    data = resp.get_json()
-    self.assertEqual(len(data), len(accounts))
-    for account in accounts:
-        self.assertTrue(any(item["name"] == account.name for item in data))
+    return jsonify(account_list), status.HTTP_200_OK
 
 
 ######################################################################
@@ -88,44 +77,59 @@ def get_accounts(account_id):
 
     return account.serialize(), status.HTTP_200_OK
 
+######################################################################
+# LIST ALL ACCOUNTS
+######################################################################
+@app.route("/accounts", methods=["GET"])
+def list_accounts():
+    """
+    List all Accounts
+    This endpoint will list all Accounts
+    """
+    app.logger.info("Request to list Accounts")
+
+    accounts = Account.all()
+    account_list = [account.serialize() for account in accounts]
+
+    app.logger.info("Returning [%s] accounts", len(account_list))
+    return jsonify(account_list), status.HTTP_200_OK
 
 ######################################################################
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
+@app.route("/accounts/<int:account_id>", methods=["PUT"])
+def update_accounts(account_id):
+    """
+    Update an Account
+    This endpoint will update an Account based on the posted data
+    """
+    app.logger.info("Request to update an Account with id: %s", account_id)
 
-def test_update_account(self):
-    """It should Update an existing Account"""
-    account = self._create_accounts(1)[0]
-    new_name = "Updated Name"
-    account_data = account.serialize()
-    account_data["name"] = new_name
+    account = Account.find(account_id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND, f"Account with id [{account_id}] could not be found.")
 
-    resp = self.client.put(
-        f"{BASE_URL}/{account.id}",
-        json=account_data,
-        content_type="application/json"
-    )
-    self.assertEqual(resp.status_code, status.HTTP_200_OK)
-    data = resp.get_json()
-    self.assertEqual(data["name"], new_name)
+    account.deserialize(request.get_json())
+    account.update()
 
-def test_update_account_not_found(self):
-    """It should return 404 when updating non-existent Account"""
-    fake_id = 9999
-    account_data = {"name": "Ghost", "email": "ghost@example.com"}
-    resp = self.client.put(
-        f"{BASE_URL}/{fake_id}",
-        json=account_data,
-        content_type="application/json"
-    )
-    self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-
+    return account.serialize(), status.HTTP_200_OK
 
 ######################################################################
 # DELETE AN ACCOUNT
 ######################################################################
+@app.route("/accounts/<int:account_id>", methods=["DELETE"])
+def delete_accounts(account_id):
+    """
+    Delete an Account
+    This endpoint will delete an Account based on the account_id that is requested
+    """
+    app.logger.info("Request to delete an Account with id: %s", account_id)
 
-# ... place you code here to DELETE an account ...
+    account = Account.find(account_id)
+    if account:
+        account.delete()
+
+    return "", status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
