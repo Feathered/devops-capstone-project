@@ -60,8 +60,15 @@ def create_accounts():
 ######################################################################
 # LIST ALL ACCOUNTS
 ######################################################################
-
-# ... place you code here to LIST accounts ...
+def test_list_accounts(self):
+    """It should List all Accounts"""
+    accounts = self._create_accounts(3)
+    resp = self.client.get(BASE_URL, content_type="application/json")
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    data = resp.get_json()
+    self.assertEqual(len(data), len(accounts))
+    for account in accounts:
+        self.assertTrue(any(item["name"] == account.name for item in data))
 
 
 ######################################################################
